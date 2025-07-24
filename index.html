@@ -723,6 +723,30 @@ closeModal() {
     document.getElementById('manualCopyModal').style.display = 'none';
 },
 
+
+// ⬇️⬇️ أضف هذه الدالة الجديدة داخل كائن app ⬇️⬇️
+shareViaWhatsApp(text) {
+    console.log("Preparing to share...");
+
+    // 1. محاولة النسخ إلى الحافظة
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            console.log('Text copied to clipboard');
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+
+    // 2. تشفير النص للرابط
+    const encodedText = encodeURIComponent(text);
+    
+    // 3. إنشاء رابط واتساب
+    const whatsappUrl = `whatsapp://send?text=${encodedText}`;
+    
+    // 4. الانتقال الفوري إلى واتساب
+    window.open(whatsappUrl, '_blank');
+},
+
 copyFromTextarea() {
     const textarea = document.getElementById('manualCopyTextarea');
     textarea.select();
@@ -828,7 +852,8 @@ copyFromTextarea() {
     });
 
     reportContent += `\n🔥❤️ شدّوا الهمم ❤️🔥`;
-    this.showReportForManualCopy(reportContent);
+this.shareViaWhatsApp(reportContent);
+
 },
 
       generateAllAttendanceReport() {
@@ -892,7 +917,9 @@ copyFromTextarea() {
                         `📱 0995657713\n` +
                         `📱 0998686631`;
 
-    this.showReportForManualCopy(reportContent);
+    this.shareViaWhatsApp(reportContent);
+
+
 },
 
         // --- استيراد وتصدير (النسخة النهائية المحدثة) ---
