@@ -1,11 +1,11 @@
 {
-  "name": "نظام إدارة الحلقات",
-  "short_name": "الحلقات",
+  "name": "نظام إدارة مسجد الحسن",
+  "short_name": "مسجد الحسن",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ecf0f1",
   "theme_color": "#2c3e50",
-  "description": "نظام لإدارة حلقات تحفيظ القرآن الكريم.",
+  "description": "نظام لإدارة حلقات تحفيظ القرآن الكريم في مسجد الحسن.",
   "icons": [
     {
       "src": "icon-192.png",
