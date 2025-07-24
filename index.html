@@ -699,6 +699,22 @@ editRingName(oldRingName) {
     const textarea = document.getElementById('manualCopyTextarea');
     textarea.value = text;
     modal.style.display = 'block';
+    
+    // --- الجزء الجديد: النسخ التلقائي للحافظة ---
+    if (navigator.clipboard) { // التحقق من أن المتصفح يدعم الواجهة الجديدة
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                // عند النجاح، أظهر إشعارًا بسيطًا
+                alert('✅ تم نسخ التقرير إلى الحافظة بنجاح!');
+            })
+            .catch(err => {
+                console.error('فشل النسخ التلقائي: ', err);
+                // في حال الفشل، يمكن للمستخدم النسخ يدويًا من النافذة
+            });
+    }
+    // -----------------------------------------
+    
+    // هذا الجزء يبقي النافذة ظاهرة للنسخ اليدوي كخيار احتياطي
     textarea.focus();
     textarea.select();
 },
