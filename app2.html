@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c3e50"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة حلقات المسجد (النسخة النهائية)</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50; --secondary-color: #3498db; --light-gray: #ecf0f1;
+            --dark-gray: #bdc3c7; --green: #2ecc71; --red: #e74c3c; --orange: #f39c12;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--light-gray); margin: 0; color: var(--primary-color); }
+        header { background-color: var(--primary-color); color: white; padding: 1rem; text-align: center; position: relative; }
+        nav { display: flex; justify-content: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .nav-btn { background: var(--secondary-color); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; font-size: 14px;}
+        .nav-btn:hover, .nav-btn.active { background-color: #2980b9; }
+        main { padding: 20px; max-width: 900px; margin: 0 auto; }
+        .page { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .page.active { display: block; }
+        .input-group, .filter-group { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        input[type="text"], select { padding: 8px; border: 1px solid var(--dark-gray); border-radius: 4px; flex-grow: 1; }
+        button, .action-btn { background-color: var(--secondary-color); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; font-size: 14px; }
+        button:hover, .action-btn:hover { opacity: 0.9; }
+        .ring { border: 1px solid var(--dark-gray); border-radius: 8px; padding: 15px; margin-bottom: 15px; background-color: #fff; }
+        .ring-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--light-gray); padding-bottom: 10px; }
+        .student-list { padding: 0; margin: 0; list-style: none; }
+        .student-list li { padding: 12px 8px; border-bottom: 1px solid var(--light-gray); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .student-name { flex-grow: 1; }
+        .student-actions { display: flex; gap: 8px; }
+        .action-btn.move { background-color: var(--orange); }
+        .action-btn.delete { background-color: var(--red); }
+        .student-name-group .last-memo { color: #7f8c8d; font-size: 0.8em; }
+        .memorization-input-group { display: flex; align-items: center; gap: 10px; flex-grow: 1; }
+        .memorization-input-group input[type="text"] { min-width: 150px; }
+        .status-indicator { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+        .status-indicator.present { background-color: var(--green); }
+        .status-indicator.absent { background-color: var(--red); }
+        #csvExportBtn { position: absolute; top: 15px; left: 15px; font-size: 24px; cursor: pointer; background: none; border: none; padding: 5px; color: white;}
+        textarea { width: calc(100% - 20px); margin-top: 10px; padding: 10px; border-radius: 5px; border: 1px solid var(--dark-gray); font-family: inherit; font-size: 1em; direction: rtl; text-align: right; }
+        .ring-footer { margin-top: 15px; text-align: left; }
+        .message-section { margin-top: 25px; }
+        .message-section h3 { border-bottom: 2px solid var(--secondary-color); padding-bottom: 5px;}
+        .message-group { display: flex; justify-content: space-between; align-items: center; padding: 10px; background-color: #f8f9fa; border-radius: 5px; margin-bottom: 10px;}
+        .copy-btn { background-color: var(--green); font-size: 18px; padding: 5px 10px;}
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid var(--dark-gray); text-align: right; }
+        thead { background-color: var(--primary-color); color: white; }
+
+
+/* أضف هذه الأكواد الجديدة في نهاية قسم الـ style */
+#manualCopyModal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+}
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 85%;
+    max-width: 500px;
+    border-radius: 8px;
+    position: relative;
+    text-align: center;
+}
+.close-btn {
+    color: #aaa;
+    position: absolute;
+    left: 15px;
+    top: 5px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close-btn:hover {
+    color: black;
+}
+#manualCopyTextarea {
+    width: 100%;
+    height: 200px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: 1em;
+    direction: rtl;
+    text-align: right;
+}
+
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>نظام إدارة الحلقات</h1>
+        <button id="csvExportBtn" onclick="app.exportToCSV()" title="تصدير البيانات كملف CSV">💾</button>
+        <nav>
+            <button class="nav-btn active" data-page="ringsPage">📚 الطلاب والحلقات</button>
+            <button class="nav-btn" data-page="attendancePage">✅ تسجيل الحضور</button>
+            <button class="nav-btn" data-page="memorizationPage">📖 تسجيل المحفوظات</button>
+            <button class="nav-btn" data-page="statsPage">📊 الإحصاءات</button>
+            <button class="nav-btn" data-page="parentsMessagePage">✉️ رسائل الأهالي</button>
+        </nav>
+    </header>
+
+    <main>
+        <div id="ringsPage" class="page active">
+            <h2>إدارة الطلاب والحلقات</h2>
+            <div class="input-group">
+                <input type="text" id="newRingName" placeholder="اسم الحلقة الجديدة">
+                <button onclick="app.addRing()">إضافة حلقة</button>
+            </div>
+            <div class="input-group">
+                <label for="csvFileInput">استيراد بيانات من ملف CSV:</label>
+                <input type="file" id="csvFileInput" accept=".csv" onchange="app.importFromCSV(event)">
+            </div>
+            <div id="ringsContainer"></div>
+        </div>
+
+        <div id="attendancePage" class="page">
+            <h2>تسجيل الحضور لتاريخ: <span id="currentDateAttendance"></span></h2>
+            <div id="attendanceContainer"></div>
+        </div>
+
+        <div id="memorizationPage" class="page">
+             <h2>تسجيل المحفوظات لتاريخ: <span id="currentDateMemorization"></span></h2>
+             <div id="memorizationContainer"></div>
+        </div>
+        
+        <div id="statsPage" class="page">
+    <h2>عرض الإحصاءات (مصفوفة)</h2>
+    <div class="filter-group">
+        <label for="ringMatrixFilter">اختر الحلقة:</label>
+        <select id="ringMatrixFilter" onchange="app.renderStats()">
+            <option value="all">كل الحلقات</option>
+        </select>
+
+        <label for="dataTypeFilter">عرض بيانات:</label>
+        <select id="dataTypeFilter" onchange="app.renderStats()">
+            <option value="attendance">الحضور</option>
+            <option value="memorization">الحفظ (صفحات)</option>
+            <option value="points">النقاط</option>
+        </select>
+
+        <button class="action-btn delete" onclick="app.resetAllPoints()">إعادة تعيين كل النقاط</button>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table id="statsTable">
+          <thead></thead>
+          <tbody></tbody>
+      </table>
+    </div>
+</div>
+
+        <div id="parentsMessagePage" class="page">
+    <h2>إعداد رسائل الأهالي</h2>
+    
+    <div class="message-section">
+        <h3>التقرير العام (لكل الحلقات)</h3>
+
+        <div class="input-group" style="padding: 10px; background-color: #f8f9fa; border-radius: 5px; margin-bottom: 10px;">
+            <label for="dismissalTimeInput" style="font-weight: bold;">🕘 أدخل وقت انصراف الطلاب:</label>
+            <input type="time" id="dismissalTimeInput" style="padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px;">
+        </div>
+        
+        <div class="message-group">
+            <span>تقرير الحضور والغياب المجمع</span>
+            <button class="copy-btn" onclick="app.generateAllAttendanceReport()">📋</button>
+        </div>
+    </div>
+
+    <div class="message-section">
+        <h3>تقارير مفصلة (حسب الحلقة)</h3>
+        <div id="ringMessageContainer"></div>
+    </div>
+</div>
+    </main>
+<div id="manualCopyModal" style="display:none;">
+    <div class="modal-content">
+        <span class="close-btn" onclick="app.closeModal()">&times;</span>
+        <h3>التقرير جاهز للنسخ</h3>
+        <textarea id="manualCopyTextarea" readonly></textarea>
+       
+    </div>
+</div>
+    <script>
+    const app = {
+data: { rings: [], records: [], lastStudentId: 0 },
+        // --- الدوال الرئيسية ---
+        init() {
+    this.loadData();
+    this.updateStudentIdsIfNeeded(); // <-- استدعاء دالة التحديث هنا
+    this.setupEventListeners();
+    this.navigateTo('ringsPage');
+},
+
+        setupEventListeners() {
+            document.querySelectorAll('.nav-btn').forEach(button => {
+                button.addEventListener('click', () => this.navigateTo(button.dataset.page));
+            });
+        },
+
+        navigateTo(pageId) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.page === pageId));
+            document.querySelectorAll('.page').forEach(page => page.style.display = page.id === pageId ? 'block' : 'none');
+
+            const pageRenderers = {
+                ringsPage: this.renderRings,
+                attendancePage: this.renderAttendance,
+                memorizationPage: this.renderMemorization,
+                statsPage: this.renderStats,
+                parentsMessagePage: this.renderParentMessagesPage
+            };
+            pageRenderers[pageId]?.call(this);
+        },
+        
+        loadData() {
+            const savedData = localStorage.getItem('mosqueAppData');
+            if (savedData) this.data = JSON.parse(savedData);
+        },
+
+        saveData() {
+            localStorage.setItem('mosqueAppData', JSON.stringify(this.data));
+        },
+
+        // --- إدارة الحلقات والطلاب (مع الميزات الجديدة) ---
+        addRing() {
+            const ringName = document.getElementById('newRingName').value.trim();
+            if (!ringName || this.data.rings.some(r => r.name === ringName)) {
+                alert('اسم الحلقة فارغ أو مكرر.');
+                return;
+            }
+            this.data.rings.push({ name: ringName, students: [] });
+            document.getElementById('newRingName').value = '';
+            this.saveData();
+            this.renderRings();
+        },
+
+        // دالة جديدة لتنسيق أرقام الصفحات في التقرير
+// دالة جديدة لتنسيق أرقام الصفحات في التقرير
+formatPageNumbers(pagesArray) {
+    if (!pagesArray || pagesArray.length === 0) {
+        // نرجع قيمة فارغة لنتحكم بالرسالة في الدالة الرئيسية
+        return null; 
+    }
+    if (pagesArray.length === 1) {
+        return `الصفحة ${pagesArray[0]}`;
+    }
+    const firstPage = pagesArray[0];
+    const lastPage = pagesArray[pagesArray.length - 1];
+    return `الصفحات من ${firstPage} إلى ${lastPage}`;
+},
+         resetAllPoints() {
+        if (!confirm("تحذير! هل أنت متأكد من إعادة تعيين نقاط جميع الطلاب إلى الصفر؟ لا يمكن التراجع عن هذا الإجراء.")) {
+            return;
+        }
+        this.data.records.forEach(record => {
+            record.points = 0;
+        });
+        this.saveData();
+        alert("تمت إعادة تعيين نقاط جميع السجلات إلى الصفر بنجاح.");
+    },
+
+       addStudent(ringName) {
+    const studentName = prompt('أدخل الاسم الثلاثي للطالب:');
+    if (!studentName || studentName.trim() === '') return;
+    
+    const ring = this.data.rings.find(r => r.name === ringName);
+    if (ring.students.some(s => s.name === studentName.trim())) {
+        alert('هذا الطالب موجود بالفعل في الحلقة.');
+        return;
+    }
+
+    // **المنطق الجديد لتوليد الرقم التعريفي**
+    // 1. زيادة العداد بمقدار 1
+    this.data.lastStudentId = (this.data.lastStudentId || 0) + 1;
+    // 2. استخدام الرقم الجديد
+    const studentId = this.data.lastStudentId;
+    
+    ring.students.push({ id: studentId, name: studentName.trim() });
+    this.saveData();
+    this.renderRings();
+},
+        
+        deleteStudent(studentId, ringName) {
+            if (!confirm("هل أنت متأكد من حذف هذا الطالب؟ سيتم حذف كل سجلاته التاريخية أيضًا.")) {
+                return;
+            }
+            const ring = this.data.rings.find(r => r.name === ringName);
+            if (ring) {
+                ring.students = ring.students.filter(s => s.id !== studentId);
+            }
+            this.data.records = this.data.records.filter(r => r.studentId !== studentId);
+            this.saveData();
+            this.renderRings();
+            alert("تم حذف الطالب بنجاح.");
+        },
+
+        moveStudent(studentId, currentRingName) {
+            const otherRings = this.data.rings.filter(r => r.name !== currentRingName);
+            if (otherRings.length === 0) {
+                alert("لا توجد حلقات أخرى لنقل الطالب إليها.");
+                return;
+            }
+            const ringNames = otherRings.map(r => r.name).join('\n');
+            const newRingName = prompt(`اختر حلقة لنقل الطالب إليها:\n${ringNames}`);
+
+            if (!newRingName || !otherRings.some(r => r.name === newRingName)) {
+                alert("اسم الحلقة غير صالح أو تم الإلغاء.");
+                return;
+            }
+
+            const currentRing = this.data.rings.find(r => r.name === currentRingName);
+            const newRing = this.data.rings.find(r => r.name === newRingName);
+            const studentToMove = currentRing.students.find(s => s.id === studentId);
+
+            if (currentRing && newRing && studentToMove) {
+                currentRing.students = currentRing.students.filter(s => s.id !== studentId);
+                newRing.students.push(studentToMove);
+                this.saveData();
+                this.renderRings();
+                alert(`تم نقل الطالب "${studentToMove.name}" إلى حلقة "${newRingName}" بنجاح.`);
+            }
+        },
+        
+        // دالة لتحديث IDs الطلاب القدامى إلى النظام الترتيبي (تعمل مرة واحدة)
+updateStudentIdsIfNeeded() {
+    // نتحقق إذا كان أول طالب لديه ID من النوع القديم (رقم عشري)
+    const firstStudent = this.data.rings[0]?.students[0];
+    if (!firstStudent || Number.isInteger(firstStudent.id)) {
+        // إذا لم يكن هناك طلاب، أو إذا كانت الأرقام بالفعل ترتيبية، لا تفعل شيئًا
+        return; 
+    }
+
+    console.log("تحديث نظام الأرقام التعريفية للطلاب القدامى...");
+    let newIdCounter = 0;
+    const idMap = new Map(); // خريطة لربط الـ ID القديم بالجديد
+
+    // الخطوة 1: إعطاء أرقام جديدة لكل الطلاب
+    this.data.rings.forEach(ring => {
+        ring.students.forEach(student => {
+            newIdCounter++;
+            idMap.set(student.id, newIdCounter); // حفظ العلاقة بين القديم والجديد
+            student.id = newIdCounter;
+        });
+    });
+
+    // الخطوة 2: تحديث كل السجلات لتعكس الأرقام الجديدة
+    this.data.records.forEach(record => {
+        if (idMap.has(record.studentId)) {
+            record.studentId = idMap.get(record.studentId);
+        }
+    });
+
+    // الخطوة 3: تحديث العداد الرئيسي لآخر رقم تم استخدامه
+    this.data.lastStudentId = newIdCounter;
+    
+    // حفظ البيانات المحدثة بشكل دائم
+    this.saveData();
+    alert("تم تحديث بيانات الطلاب القدامى بنجاح إلى نظام الترقيم الجديد!");
+},
+
+      renderRings() {
+    const container = document.getElementById('ringsContainer');
+    container.innerHTML = this.data.rings.map(ring => {
+        const sortedStudents = [...ring.students].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+        return `
+            <div class="ring">
+                <div class="ring-header">
+                    <h3>${ring.name}</h3>
+                    <div class="student-actions">
+                        <button onclick="app.addStudent('${ring.name}')">إضافة طالب</button>
+                        <button class="action-btn" onclick="app.editRingName('${ring.name}')">✏️ تعديل الاسم</button>
+                        <button class="action-btn delete" onclick="app.deleteRing('${ring.name}')">🗑️ حذف الحلقة</button>
+                    </div>
+                </div>
+                <ul class="student-list">
+                    ${sortedStudents.map(s => `
+                        <li>
+                            <span class="student-name">${s.name}</span>
+                            <div class="student-actions">
+                                <button class="action-btn" onclick="app.editStudentName(${s.id}, '${ring.name}')">✏️ تعديل</button>
+                                <button class="action-btn move" onclick="app.moveStudent(${s.id}, '${ring.name}')">🔄 نقل</button>
+                                <button class="action-btn delete" onclick="app.deleteStudent(${s.id}, '${ring.name}')">🗑️ حذف</button>
+                            </div>
+                        </li>
+                    `).join('') || '<li>لا يوجد طلاب بعد</li>'}
+                </ul>
+            </div>
+        `;
+    }).join('');
+},
+// دالة لحفظ المدخلات مؤقتًا
+saveDraft(studentId, field, value) {
+    const draftKey = `draft-${studentId}`;
+    let draft = JSON.parse(localStorage.getItem(draftKey) || '{}');
+    draft[field] = value;
+    localStorage.setItem(draftKey, JSON.stringify(draft));
+},
+        // --- الحضور والمحفوظات (بدون تغيير) ---
+        toggleAttendance(studentId) {
+            const today = new Date().toISOString().split('T')[0];
+            let record = this.data.records.find(r => r.studentId === studentId && r.date === today);
+            if (!record) {
+                record = { studentId, date: today, attendance: 'present', pages: [], points: 0 };
+                this.data.records.push(record);
+            } else {
+                record.attendance = record.attendance === 'present' ? 'absent' : 'present';
+            }
+            this.saveData();
+            this.renderAttendance();
+        },
+        
+       renderAttendance() {
+    const container = document.getElementById('attendanceContainer');
+    document.getElementById('currentDateAttendance').textContent = new Date().toISOString().split('T')[0];
+    container.innerHTML = this.data.rings.map(ring => {
+        
+        // **الإضافة الجديدة: ترتيب الطلاب أبجديًا**
+        const sortedStudents = [...ring.students].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+
+        return `
+            <div class="ring">
+                <h3>${ring.name}</h3>
+                <ul class="student-list">
+                    ${sortedStudents.map(student => { // استخدام القائمة المرتبة هنا
+                        const record = this.data.records.find(r => r.studentId === student.id && r.date === new Date().toISOString().split('T')[0]);
+                        const status = record?.attendance === 'present' ? 'present' : 'absent';
+                        return `<li><span>${student.name}</span><div class="status-indicator ${status}" onclick="app.toggleAttendance(${student.id})"></div></li>`;
+                    }).join('') || '<li>لا يوجد طلاب</li>'}
+                </ul>
+            </div>
+        `;
+    }).join('');
+},
+        
+        parsePageInput(input) {
+            if (!input) return [];
+            const pages = new Set();
+            input.split(',').forEach(part => {
+                part = part.trim();
+                if (part.includes('-')) {
+                    const [start, end] = part.split('-').map(Number);
+                    if (!isNaN(start) && !isNaN(end) && end >= start) {
+                        for (let i = start; i <= end; i++) pages.add(i);
+                    }
+                } else if (!isNaN(Number(part)) && part !== '') {
+                    pages.add(Number(part));
+                }
+            });
+            return Array.from(pages);
+        },
+
+deleteRing(ringNameToDelete) {
+    const ring = this.data.rings.find(r => r.name === ringNameToDelete);
+    if (!ring) return;
+
+    // **المنطق الجديد: التحقق من وجود طلاب أولاً**
+    if (ring.students.length > 0) {
+        alert(`لا يمكن حذف حلقة "${ringNameToDelete}" لأنها تحتوي على طلاب.\n\nيرجى نقل أو حذف جميع الطلاب منها أولاً.`);
+        return;
+    }
+
+    // إذا كانت الحلقة فارغة، استمر في الحذف
+    if (confirm(`هل أنت متأكد من حذف الحلقة الفارغة "${ringNameToDelete}"؟`)) {
+        this.data.rings = this.data.rings.filter(r => r.name !== ringNameToDelete);
+        this.saveData();
+        this.renderRings();
+        alert(`تم حذف الحلقة "${ringNameToDelete}" بنجاح.`);
+    }
+},
+
+// دالة جديدة لتعديل اسم الطالب
+editStudentName(studentId, ringName) {
+    const ring = this.data.rings.find(r => r.name === ringName);
+    if (!ring) return;
+
+    const student = ring.students.find(s => s.id === studentId);
+    if (!student) return;
+
+    const newName = prompt("أدخل الاسم الجديد للطالب:", student.name);
+
+    if (!newName || newName.trim() === '' || newName.trim() === student.name) {
+        return; // إلغاء بدون رسالة
+    }
+    if (ring.students.some(s => s.name === newName.trim())) {
+        alert("هذا الاسم موجود بالفعل في هذه الحلقة.");
+        return;
+    }
+    student.name = newName.trim();
+    this.saveData();
+    this.renderRings();
+},
+
+// دالة جديدة لتعديل اسم الحلقة
+editRingName(oldRingName) {
+    const newRingName = prompt("أدخل اسم الحلقة الجديد:", oldRingName);
+
+    if (!newRingName || newRingName.trim() === '' || newRingName.trim() === oldRingName) {
+        return; // إلغاء بدون رسالة
+    }
+    if (this.data.rings.some(r => r.name === newRingName.trim())) {
+        alert("اسم الحلقة هذا موجود بالفعل.");
+        return;
+    }
+    const ringToEdit = this.data.rings.find(r => r.name === oldRingName);
+    if (ringToEdit) {
+        ringToEdit.name = newRingName.trim();
+        this.saveData();
+        this.renderRings();
+    }
+},
+
+
+    saveMemorizationForRing(ringName) {
+    const today = new Date().toISOString().split('T')[0];
+    const ring = this.data.rings.find(r => r.name === ringName);
+    let changesMade = false;
+    
+    ring.students.forEach(student => {
+        const draftKey = `draft-${student.id}`;
+        const draft = JSON.parse(localStorage.getItem(draftKey) || '{}');
+        
+        if (draft.pagesInput) {
+            changesMade = true;
+            const pagesArray = this.parsePageInput(draft.pagesInput);
+            if (pagesArray.length === 0) return;
+
+            const quality = draft.quality || 'normal';
+            
+            // حساب نقاط العملية الحالية
+            let pointsPer_page = 2;
+            if (quality === 'review') pointsPer_page = 1;
+            if (quality === 'excellent') pointsPer_page = 3;
+            const newPoints = pagesArray.length * pointsPer_page;
+            
+            let record = this.data.records.find(r => r.studentId === student.id && r.date === today);
+            
+            // إذا لم يوجد سجل، أنشئ واحدًا جديدًا مع مصفوفة للمحفوظات
+            if (!record) {
+                record = { 
+                    studentId: student.id, 
+                    date: today, 
+                    attendance: 'present', 
+                    memorizations: [], // **هيكل البيانات الجديد**
+                    points: 0 
+                };
+                this.data.records.push(record);
+            }
+
+            // تأكد من وجود مصفوفة المحفوظات (للتوافق مع البيانات القديمة)
+            if (!record.memorizations) {
+                record.memorizations = [];
+            }
+            
+            // إضافة "حدث" الحفظ الجديد إلى مصفوفة المحفوظات
+            record.memorizations.push({
+                pages: pagesArray.sort((a,b)=>a-b),
+                quality: quality
+            });
+
+            // تحديث إجمالي النقاط والحضور
+            record.points = (record.points || 0) + newPoints;
+            record.attendance = 'present';
+            
+            localStorage.removeItem(draftKey);
+        }
+    });
+    
+    if (changesMade) {
+        this.saveData();
+        alert(`تم إضافة المحفوظات الجديدة لحلقة "${ringName}"`);
+        this.renderMemorization();
+    } else {
+        const hasAnyDraft = ring.students.some(s => localStorage.getItem(`draft-${s.id}`));
+        if (!hasAnyDraft) {
+            alert('لم يتم إدخال أي بيانات جديدة للحفظ.');
+        }
+    }
+},
+        
+       renderMemorization() {
+    const container = document.getElementById('memorizationContainer');
+    document.getElementById('currentDateMemorization').textContent = new Date().toISOString().split('T')[0];
+    container.innerHTML = this.data.rings.map(ring => {
+        
+        // **الإضافة الجديدة: ترتيب الطلاب أبجديًا**
+        const sortedStudents = [...ring.students].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+
+        let ringStudentsHTML = sortedStudents.map(student => {
+            const draft = JSON.parse(localStorage.getItem(`draft-${student.id}`) || '{}');
+            const quality = draft.quality || 'normal';
+            
+            return `<li>
+                <div class="student-name-group" style="width: 100%;">
+                    <strong>${student.name}</strong>
+                    <div class="last-memo">آخر حفظ: ${
+                        (this.data.records.find(r => r.studentId === student.id && r.date === new Date().toISOString().split('T')[0])?.pages.join(', ')) || 'لا يوجد'
+                    }</div>
+                </div>
+                <div class="memorization-input-group" style="width: 100%; margin-top: 10px;">
+                    <input type="text" id="pages-input-${student.id}" placeholder="صفحات الحفظ: 121-125" style="flex-grow: 1;" 
+                        value="${draft.pagesInput || ''}" oninput="app.saveDraft(${student.id}, 'pagesInput', this.value)">
+                </div>
+                <div class="student-actions" style="width:100%; margin-top: 10px; justify-content: flex-start;">
+                    <label><input type="radio" name="quality-${student.id}" value="review" ${quality === 'review' ? 'checked' : ''} onchange="app.saveDraft(${student.id}, 'quality', this.value)"> مراجعة (1)</label>
+                    <label style="margin-right: 15px;"><input type="radio" name="quality-${student.id}" value="normal" ${quality === 'normal' ? 'checked' : ''} onchange="app.saveDraft(${student.id}, 'quality', this.value)"> عادي (2)</label>
+                    <label style="margin-right: 15px;"><input type="radio" name="quality-${student.id}" value="excellent" ${quality === 'excellent' ? 'checked' : ''} onchange="app.saveDraft(${student.id}, 'quality', this.value)"> ممتاز (3)</label>
+                </div>
+            </li>`;
+        }).join('');
+
+        return `
+            <div class="ring">
+                <div class="ring-header"><h3>${ring.name}</h3></div>
+                <ul class="student-list">${ringStudentsHTML || '<li>لا يوجد طلاب</li>'}</ul>
+                <div class="ring-footer"><button onclick="app.saveMemorizationForRing('${ring.name}')">حفظ محفوظات حلقة ${ring.name}</button></div>
+            </div>`;
+    }).join('');
+},
+        // --- الإحصاءات (النسخة النهائية المحدثة) ---
+        renderStats() {
+            const ringFilter = document.getElementById('ringMatrixFilter').value;
+            const dataType = document.getElementById('dataTypeFilter').value;
+            const table = document.getElementById('statsTable');
+            const thead = table.querySelector('thead');
+            const tbody = table.querySelector('tbody');
+
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            let filteredStudents = [];
+            if (ringFilter === 'all') {
+                filteredStudents = this.data.rings.flatMap(r => r.students);
+            } else {
+                const selectedRing = this.data.rings.find(r => r.name === ringFilter);
+                if (selectedRing) filteredStudents = selectedRing.students;
+            }
+
+            filteredStudents.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+
+            if (filteredStudents.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="100%">لا يوجد طلاب لعرضهم.</td></tr>';
+                return;
+            }
+
+            const studentIds = filteredStudents.map(s => s.id);
+            const relevantRecords = this.data.records.filter(r => studentIds.includes(r.studentId));
+            const allDates = [...new Set(relevantRecords.map(r => r.date))].sort();
+
+            let headerRow = '<tr><th>أسماء الطلاب</th>';
+            allDates.forEach(date => headerRow += `<th>${date}</th>`);
+            headerRow += '</tr>';
+            thead.innerHTML = headerRow;
+
+            filteredStudents.forEach(student => {
+                let studentRow = `<tr><td>${student.name}</td>`;
+                allDates.forEach(date => {
+                    const record = relevantRecords.find(r => r.studentId === student.id && r.date === date);
+                    let cellContent = '-';
+                    if (record) {
+                        switch (dataType) {
+                            case 'attendance': cellContent = record.attendance === 'present' ? '✅' : '❌'; break;
+                            case 'memorization': cellContent = record.pages && record.pages.length > 0 ? record.pages.join(';') : '0'; break;
+                            case 'points': cellContent = record.points || 0; break;
+                        }
+                    } else {
+                         if (dataType === 'attendance') cellContent = '❌'; else cellContent = '0';
+                    }
+                    studentRow += `<td>${cellContent}</td>`;
+                });
+                studentRow += '</tr>';
+                tbody.innerHTML += studentRow;
+            });
+
+            const ringFilterSelect = document.getElementById('ringMatrixFilter');
+            const currentSelection = ringFilterSelect.value;
+            ringFilterSelect.innerHTML = '<option value="all">كل الحلقات</option>';
+            this.data.rings.forEach(ring => {
+                ringFilterSelect.innerHTML += `<option value="${ring.name}">${ring.name}</option>`;
+            });
+            ringFilterSelect.value = currentSelection;
+        },
+
+        // --- رسائل الأهالي (النسخة النهائية المحدثة) ---
+       showReportForManualCopy(text) {
+    const modal = document.getElementById('manualCopyModal');
+    const textarea = document.getElementById('manualCopyTextarea');
+    textarea.value = text;
+    modal.style.display = 'block';
+    textarea.focus();
+    textarea.select();
+},
+
+closeModal() {
+    document.getElementById('manualCopyModal').style.display = 'none';
+},
+
+copyFromTextarea() {
+    const textarea = document.getElementById('manualCopyTextarea');
+    textarea.select();
+    // لضمان التحديد الكامل في بعض المتصفحات
+    textarea.setSelectionRange(0, 99999); 
+    
+    // سنستخدم نفس دالة النسخ الحديثة هنا
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(textarea.value)
+            .then(() => alert("تم النسخ بنجاح!"))
+            .catch(err => alert("فشل النسخ."));
+    } else {
+        // كخيار احتياطي
+        try {
+            document.execCommand('copy');
+            alert("تم النسخ بنجاح (باستخدام الطريقة الاحتياطية).");
+        } catch (err) {
+            alert("فشل النسخ.");
+        }
+    }
+},
+
+        getLastActiveDay() {
+            if (!this.data.records || this.data.records.length === 0) return null;
+            return this.data.records.map(r => r.date).sort().pop();
+        },
+        
+        renderParentMessagesPage() {
+            const ringMessageContainer = document.getElementById('ringMessageContainer');
+            ringMessageContainer.innerHTML = this.data.rings.map(ring => `
+                <div class="message-group">
+                    <span>${ring.name}</span>
+                    <button class="copy-btn" onclick="app.generateRingReport('${ring.name}')" title="نسخ تقرير حلقة ${ring.name}">📋</button>
+                </div>
+            `).join('');
+        },
+
+  generateRingReport(ringName) {
+    const lastActiveDay = this.getLastActiveDay();
+    if (!lastActiveDay) {
+        alert("لا توجد أي بيانات مسجلة لإنشاء تقرير.");
+        return;
+    }
+
+    // --- الإضافة الجديدة ---
+    // جلب وتنسيق وقت الانصراف من حقل الإدخال
+    const dismissalTime = document.getElementById('dismissalTimeInput').value;
+    let dismissalText = "لم يحدد";
+    if (dismissalTime) {
+        let [hours, minutes] = dismissalTime.split(':');
+        const ampm = hours >= 12 ? 'مساءً' : 'صباحًا';
+        hours = hours % 12 || 12; // تحويل الساعة 0 إلى 12
+        dismissalText = `${hours}:${minutes} ${ampm}`;
+    }
+    // --- نهاية الإضافة ---
+
+    const ring = this.data.rings.find(r => r.name === ringName);
+    
+    // -- تعديل رأس التقرير ليشمل وقت الانصراف --
+    let reportContent = `── بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ──\n\n` +
+                      `*تقرير حلقة الأستاذ ${ring.name}*\n` +
+                      `*آخر يوم مسجل: ${lastActiveDay}*\n` +
+                      `*وقت الانصراف: ${dismissalText}*\n\n`;
+
+    const sortedStudents = [...ring.students].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+
+    sortedStudents.forEach((student, index) => {
+        const record = this.data.records.find(r => r.studentId === student.id && r.date === lastActiveDay);
+        
+        reportContent += `*${index + 1}. ${student.name}:* `;
+
+        if (record?.attendance === 'present') {
+            const hasMemorized = (record.memorizations && record.memorizations.length > 0) || (record.pages && record.pages.length > 0);
+
+            if (hasMemorized) {
+                reportContent += "حضر وسمع ";
+                
+                let memoParts = [];
+                if (record.memorizations && record.memorizations.length > 0) {
+                    record.memorizations.forEach(memoEvent => {
+                        let memoText = this.formatPageNumbers(memoEvent.pages);
+                        if (memoText) {
+                            if (memoEvent.quality === 'excellent') {
+                                memoText += " (بإتقان ممتاز ⭐)";
+                            } else if (memoEvent.quality === 'review') {
+                                memoText += " (مراجعة)";
+                            }
+                            memoParts.push(memoText);
+                        }
+                    });
+                } else if (record.pages) {
+                    memoParts.push(this.formatPageNumbers(record.pages));
+                }
+                
+                reportContent += memoParts.join("، وسمع ");
+            } else {
+                reportContent += "حضر ولم يسمع شيئًا";
+            }
+        } else {
+            reportContent += "لم يحضر";
+        }
+        reportContent += '\n\n';
+    });
+
+    reportContent += `\n🔥❤️ شدّوا الهمم ❤️🔥`;
+    this.showReportForManualCopy(reportContent);
+},
+
+      generateAllAttendanceReport() {
+    const lastActiveDay = this.getLastActiveDay();
+    if (!lastActiveDay) {
+        alert("لا توجد بيانات مسجلة لإنشاء تقرير.");
+        return;
+    }
+
+    // -- الإضافات الجديدة --
+    // 1. جلب وقت الانصراف من الحقل الجديد
+    const dismissalTime = document.getElementById('dismissalTimeInput').value;
+    let dismissalText = "لم يحدد";
+    if (dismissalTime) {
+        // تحويل الوقت من 24 ساعة إلى 12 ساعة مع صباحًا/مساءً
+        let [hours, minutes] = dismissalTime.split(':');
+        const ampm = hours >= 12 ? 'مساءً' : 'صباحًا';
+        hours = hours % 12 || 12; // تحويل الساعة 0 إلى 12
+        dismissalText = `${hours}:${minutes} ${ampm}`;
+    }
+
+    // 2. حساب اسم اليوم من التاريخ
+    const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const dateObj = new Date(lastActiveDay);
+    // تعديل بسيط لضمان صحة التاريخ بغض النظر عن المنطقة الزمنية
+    dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
+    const dayName = days[dateObj.getDay()];
+    // -- نهاية الإضافات --
+
+    const allStudents = this.data.rings.flatMap(r => r.students);
+    const present = [];
+    const absent = [];
+    allStudents.forEach(student => {
+        const record = this.data.records.find(r => r.studentId === student.id && r.date === lastActiveDay);
+        (record?.attendance === 'present' ? present : absent).push(student.name);
+    });
+
+    present.sort((a, b) => a.localeCompare(b, 'ar'));
+    absent.sort((a, b) => a.localeCompare(b, 'ar'));
+
+    // تحويل القوائم إلى نص مفصول بـ " - " كما في المثال
+    const presentList = present.length > 0 ? present.join(' - ') : "لا يوجد حضور";
+    const absentList = absent.length > 0 ? absent.join(' - ') : "لا يوجد غياب";
+
+    // -- بناء التقرير الجديد بنفس التنسيق المطلوب --
+    let reportContent = `━━━━━ ◦ *بِسۡمِ ٱللَّهِ ٱلرَّحۡمٰنِ ٱلرَّحِيم* ◦ ━━━━━\n` +
+                        `${dayName}\n` +
+                        `التاريخ (${lastActiveDay.replace(/-/g, '/')})\n` +
+                        `━━━━━━━━━━ ◦ ❖ ◦ ━━━━━━━━━━\n` +
+                        `☚ *تم انصراف الطلاب*\n` +
+                        `الساعة ${dismissalText}\n` +
+                        `━━━━━━━━━━ ◦ ❖ ◦ ━━━━━━━━━━\n` +
+                        `✅ *الحضور* (${present.length}):\n` +
+                        `${presentList}\n` +
+                        `━━━━━━━━━━ ◦ ❖ ◦ ━━━━━━━━━━\n` +
+                        `❌ *الغياب* (${absent.length}):\n` +
+                        `${absentList}\n` +
+                        `━━━━━━━━━━ ◦ ❖ ◦ ━━━━━━━━━━\n` +
+                        `اللَّهُمَّ عَلِّمْنَاْ مَاْ يَنْفَعُنَاْ وَنْفَعْنَاْ بِمَاْ عَلَّمْتَنَاْ وَزِدْنَاْ عِلْمَاً وَعَمَلَاً مُتَقَبَّلاً يَاْ أرْحَمَ الرَّاْحِمِينْ..........\n\n` +
+                        `لأي ملاحظة او استفسار يرجى التواصل على الرقم:\n` +
+                        `📱 0995657713\n` +
+                        `📱 0998686631`;
+
+    this.showReportForManualCopy(reportContent);
+},
+
+        // --- استيراد وتصدير (النسخة النهائية المحدثة) ---
+     importFromCSV(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const text = e.target.result;
+        const rows = text.split('\n').slice(1);
+        let newStudentsCount = 0;
+        let recordsAdded = 0;
+        let recordsSkipped = 0;
+
+        rows.forEach(row => {
+            if (!row.trim()) return;
+            // الآن نتوقع 7 أعمدة
+            const columns = row.split(',');
+            if (columns.length < 7) return;
+
+            const date = columns[0]?.trim();
+            const studentName = columns[1]?.trim();
+            const ringName = columns[2]?.trim();
+            const attendanceText = columns[3]?.trim();
+            const pagesText = columns[4]?.trim().replace(/^"|"$/g, '');
+            const points = parseInt(columns[5]?.trim() || 0);
+            const studentId = parseFloat(columns[6]?.trim()); // **قراءة الرقم التعريفي**
+
+            if (!studentName || !date || !studentId) return;
+            
+            const attendance = attendanceText.includes('حاضر') ? 'present' : 'absent';
+            const pages = pagesText === '-' ? [] : pagesText.split(';').map(p => parseInt(p.trim())).filter(p => !isNaN(p));
+
+            // البحث عن الطالب بالـ ID أولاً عبر كل الحلقات
+            let student = this.data.rings.flatMap(r => r.students).find(s => s.id === studentId);
+            
+            // إنشاء الحلقة إذا لم تكن موجودة
+            let ring = this.data.rings.find(r => r.name === ringName);
+            if (!ring) {
+                ring = { name: ringName, students: [] };
+                this.data.rings.push(ring);
+            }
+            
+            // إذا لم نجد الطالب بالـ ID، ننشئه بالـ ID المستورد
+            if (!student) {
+                student = { id: studentId, name: studentName };
+                ring.students.push(student);
+                newStudentsCount++;
+            }
+            
+            // منع إضافة سجلات مكررة
+            const recordExists = this.data.records.some(r => r.studentId === student.id && r.date === date);
+            if (!recordExists) {
+                const newRecord = { studentId: student.id, date, attendance, pages, points };
+                // التأكد من أن حقل الجودة موجود (للتوافق مع التعديلات الجديدة)
+                if (columns.length > 7 && columns[7]?.trim()) {
+                    newRecord.quality = columns[7].trim();
+                }
+                this.data.records.push(newRecord);
+                recordsAdded++;
+            } else {
+                recordsSkipped++;
+            }
+        });
+        this.saveData();
+        alert(`تم الاستيراد بنجاح!\nطلاب جدد: ${newStudentsCount}\nسجلات أضيفت: ${recordsAdded}\nسجلات تم تخطيها (مكررة): ${recordsSkipped}`);
+        this.navigateTo('ringsPage');
+    };
+    reader.readAsText(file, 'UTF-8');
+},
+
+      exportToCSV() {
+    // التحقق من وجود بيانات قبل البدء
+    if (!this.data.records || this.data.records.length === 0) {
+        alert("لا توجد بيانات لتصديرها.");
+        return;
+    }
+
+    const csvRows = [];
+    const headers = "التاريخ,اسم الطالب,الحلقة,الحالة,المحفوظات (صفحات),النقاط,StudentID\n";
+    
+    // --- هذا هو السطر الذي كان مفقودًا ---
+    // الحل: استخراج كل التواريخ الفريدة من السجلات
+    const allDays = [...new Set(this.data.records.map(r => r.date))];
+
+    this.data.rings.forEach(ring => {
+        ring.students.forEach(student => {
+            allDays.forEach(day => {
+                const record = this.data.records.find(r => r.studentId === student.id && r.date === day);
+                let attendance, pagesText, points;
+
+                if (record) {
+                    attendance = record.attendance === 'present' ? '✅ حاضر' : '❌ غائب';
+                    
+                    // منطق محسن لجلب الصفحات من الهيكل الجديد والقديم للبيانات
+                    let pagesArray = [];
+                    if (record.memorizations && record.memorizations.length > 0) {
+                        pagesArray = record.memorizations.flatMap(m => m.pages);
+                    } else if (record.pages) {
+                        pagesArray = record.pages; // للتوافق مع البيانات القديمة
+                    }
+                    pagesText = pagesArray.length > 0 ? pagesArray.join(';') : '-';
+                    
+                    points = record.points || 0;
+                } else {
+                    // إذا لم يوجد سجل للطالب في هذا اليوم، نعتبره غائبًا
+                    attendance = '❌ غائب';
+                    pagesText = '-';
+                    points = 0;
+                }
+                
+                // إضافة student.id في نهاية السطر
+                csvRows.push([day, student.name, ring.name, attendance, `"${pagesText}"`, points, student.id].join(','));
+            });
+        });
+    });
+    
+    // الفرز حسب التاريخ (من الأحدث إلى الأقدم) ثم اسم الطالب أبجديًا
+    csvRows.sort((a, b) => {
+        const rowA = a.split(',');
+        const rowB = b.split(',');
+        const dateA = new Date(rowA[0]);
+        const dateB = new Date(rowB[0]);
+        const nameA = rowA[1];
+        const nameB = rowB[1];
+        
+        if (dateB - dateA !== 0) {
+            return dateB - dateA;
+        }
+        return nameA.localeCompare(nameB, 'ar');
+    });
+
+    const fullCsv = headers + csvRows.join('\n');
+    const blob = new Blob(["\uFEFF" + fullCsv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `تقرير_الحلقات_الكامل.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+},
+
+
+
+    };
+    
+    // --- تشغيل التطبيق ---
+    app.init();
+
+    
+    </script>
+
+
+<script>
+      // تأكد من أن المتصفح يدعم Service Workers
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./service-worker.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(error => {
+              console.log('ServiceWorker registration failed: ', error);
+            });
+        });
+      }
+    </script> 
+
+    
+</body>
+</html>
